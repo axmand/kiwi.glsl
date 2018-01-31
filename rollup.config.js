@@ -3,20 +3,24 @@ import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 
 export default {
-    //exports: 'named',
     input: './src/init.js',
-    name:'kiwi.glsl',
     output:{
-        format:'iife',
-        file:'./dist/kiwi.glsl.js'
+        globals:'',
+        exports: 'named',
+        name:'kiwi',
+        format:'umd',
+        file:'./dist/bundle.js'
     },
     external: [
         'fs',
-        'steam',
+        // 'steam',
         'path'
     ],
     plugins: [
-        resolve(),
+        resolve({
+            jsnext: true,
+            main: true
+        }),
         commonjs(),
         babel({
             exclude: 'node_modules/**'
