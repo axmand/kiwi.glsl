@@ -4,7 +4,7 @@
 [![npm version](https://badge.fury.io/js/kiwi.glsl.svg)](https://badge.fury.io/js/kiwi.glsl)
 
 > precompile for glsl file
-###usage###
+### usage ###
 ```javascript
 const frgText = `precision mediump float;
 uniform float time;
