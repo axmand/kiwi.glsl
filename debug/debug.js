@@ -188,3 +188,13 @@ gl_Position = projectionMatrix * mvPosition;
 const ast = glsl.parse(text);
 
 const [a,b] = glsl.getUniformsAndAttributes(ast);
+
+const frgText = `precision mediump float;
+uniform float time;
+void main() {
+	gl_FragColor = vec4(1, 0, 0.5, time);
+}`
+
+const ast2 = glsl.parse(frgText);
+
+const [c,d] = glsl.getUniformsAndAttributes(ast2);
