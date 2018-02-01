@@ -29,36 +29,107 @@ const parse = function (str) {
  * search node by depth
  */
 const getUniformsAndAttributes = function (ast) {
+	const active = {};
+	const define = {};
+	const expression = [];
 	const uniforms = [], attributes = [];
-	const next = function (nodes) {
+	const _uniforms = [], _attributes = [];
+
+	const next = function (nodes, identify = 'none') {
 		//顺序遍历
 		nodes.forEach(node => {
+			//处理宏定义
 			if (node.type === 'preprocessor') {
-				if(node.guarded_statements){
-					next(node.guarded_statements);
+				//1.首先寻找define
+				if (node.directive === '#define') {
+					define[node.identifier] = node.token_string;
 				}
-				if(node.elseBody){
-					next([node.elseBody]);
+				if ((node.directive === '#ifdef' && define[node.value]) || (node.directive === '#ifndef' && !define[node.value])) {
+					if (node.guarded_statements) {
+						next(node.guarded_statements, identify);
+					}
+				}
+				if (node.directive === '#if') {
+					for (const key in define) {
+						const reg = new RegExp(`\\b${key}\\b`, 'gi');
+						if (node.value.match(reg)) {
+							next(node.guarded_statements, identify);
+						}
+					}
+				}
+				if (node.elseBody) {
+					next([node.elseBody], identify);
 				}
 			}
-			else if(node.type === 'preprocessor' && node.elseBody){
-
+			else if (node.type === 'function_declaration') {
+				if (node.name === 'main') {
+					next(node.body.statements, 'main');
+				} else {
+					//debug
+					const ss = "";
+				}
+			}
+			else if (node.type === 'expression') {
+				next([node.expression], identify);
+			}
+			else if (node.type === 'binary') {
+				//左边是等式
+				active[node.left.name] = 1;
+				if (node.right.type === 'identifier') {
+					active[node.right.name] = 1;
+				} else {
+					next([node.right], identify);
+				}
+			}
+			else if (node.type === 'function_call') {
+				if(identify === 'main'){
+					node.parameters.forEach(parameter => {
+						if (parameter.type === 'identifier')
+							next([parameter], identify);
+					});
+				}
+			}
+			else if (node.type === 'identifier') {
+				if (identify === 'main')
+					active[node.name] = 1;
 			}
 			else if (node.type === 'declarator') {
-				next(node.declarators);
-			} 
+				if (node.typeAttribute) {
+					next(node.declarators, node.typeAttribute.qualifier||identify);
+				} else {
+					next(node.declarators, identify);
+				}
+			}
 			else if (node.type === 'declarator_item') {
-				const typeAttribute = node.parent.typeAttribute;
-				if(typeAttribute.qualifier === 'uniform'){
-					uniforms.push(node);
-				}else if(typeAttribute.qualifier === 'attribute'){
-					attributes.push(node);
+				if (identify === 'uniform') {
+					_uniforms.push({
+						name: node.name.name,
+						type: node.parent.typeAttribute.name
+					});
+				} else if (identify === 'attribute') {
+					_attributes.push({
+						name: node.name.name,
+						type: node.parent.typeAttribute.name
+					});
+				} else if (identify === 'varying') {
+					const s = "";
+				} else if(identify === 'main') {
+					next([node.initializer],identify);
 				}
 			}
 		});
 	}
 	next(ast.statements);
-	return [uniforms,attributes];
+	//过滤non-actived的变量或者对象
+	_uniforms.forEach(uniform => {
+		if (active[uniform.name])
+			uniforms.push(uniform);
+	});
+	_attributes.forEach(attribute => {
+		if (active[attribute.name])
+			attributes.push(attribute);
+	});
+	return [uniforms, attributes];
 }
 
 module.exports = {
