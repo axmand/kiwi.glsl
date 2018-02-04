@@ -1,5 +1,105 @@
 const glsl = require('./../src/init');
-const text = `precision highp float;
+
+const text = `#define DIRECTIONAL_LIGHT_COUNT 1
+#define SHADER_NAME standard
+uniform mat4 worldViewProjection ;
+
+uniform mat4 worldInverseTranspose ;
+
+uniform mat4 world ;
+
+uniform vec2 uvRepeat ;
+
+uniform vec2 uvOffset ;
+
+attribute vec3 position;
+
+attribute vec2 texcoord;
+
+#if defined(AOMAP_ENABLED)
+attribute vec2 texcoord2;
+
+#endif
+attribute vec3 normal;
+
+attribute vec4 tangent;
+
+#ifdef VERTEX_COLOR
+attribute vec4 a_Color;
+
+varying vec4 v_Color;
+#endif
+attribute vec3 barycentric;
+
+#ifdef SKINNING
+attribute vec3 weight;
+
+attribute vec4 joint;
+
+uniform mat4 skinMatrix [JOINT_COUNT];
+
+mat4 getSkinMatrix(float idx) {
+    return skinMatrix[int(idx)];
+}
+#endif
+
+varying vec2 v_Texcoord;
+varying vec3 v_Normal;
+varying vec3 v_WorldPosition;
+varying vec3 v_Barycentric;
+#if defined(PARALLAXOCCLUSIONMAP_ENABLED) || defined(NORMALMAP_ENABLED)
+varying vec3 v_Tangent;
+varying vec3 v_Bitangent;
+#endif
+#if defined(AOMAP_ENABLED)
+varying vec2 v_Texcoord2;
+#endif
+void main()
+{
+    vec3 skinnedPosition = position;
+    vec3 skinnedNormal = normal;
+    vec3 skinnedTangent = tangent.xyz;
+#ifdef SKINNING
+    mat4 skinMatrixWS = getSkinMatrix(joint.x) * weight.x;
+if (weight.y > 1e-4)
+{
+    skinMatrixWS += getSkinMatrix(joint.y) * weight.y;
+}
+if (weight.z > 1e-4)
+{
+    skinMatrixWS += getSkinMatrix(joint.z) * weight.z;
+}
+float weightW = 1.0-weight.x-weight.y-weight.z;
+if (weightW > 1e-4)
+{
+    skinMatrixWS += getSkinMatrix(joint.w) * weightW;
+}
+
+    skinnedPosition = (skinMatrixWS * vec4(position, 1.0)).xyz;
+    skinnedNormal = (skinMatrixWS * vec4(normal, 0.0)).xyz;
+    skinnedTangent = (skinMatrixWS * vec4(tangent.xyz, 0.0)).xyz;
+#endif
+    gl_Position = worldViewProjection * vec4(skinnedPosition, 1.0);
+    v_Texcoord = texcoord * uvRepeat + uvOffset;
+    v_WorldPosition = (world * vec4(skinnedPosition, 1.0)).xyz;
+    v_Barycentric = barycentric;
+    v_Normal = normalize((worldInverseTranspose * vec4(skinnedNormal, 0.0)).xyz);
+#if defined(PARALLAXOCCLUSIONMAP_ENABLED) || defined(NORMALMAP_ENABLED)
+    v_Tangent = normalize((worldInverseTranspose * vec4(skinnedTangent, 0.0)).xyz);
+    v_Bitangent = normalize(cross(v_Normal, v_Tangent) * tangent.w);
+#endif
+#ifdef VERTEX_COLOR
+    v_Color = a_Color;
+#endif
+#if defined(AOMAP_ENABLED)
+    v_Texcoord2 = texcoord2;
+#endif
+}`;
+
+const ast = glsl.parse(text);
+const [a,b] = glsl.getUniformsAndAttributes(ast);
+
+const text2 = `precision highp float;
 precision highp int;
 #define SHADER_NAME MeshNormalMaterial
 #define GAMMA_FACTOR 2
@@ -38,7 +138,6 @@ attribute vec2 uv;
 	attribute vec4 skinIndex;
 	attribute vec4 skinWeight;
 #endif
-
 #define NORMAL
 #if defined( FLAT_SHADED ) || defined( USE_BUMPMAP ) || defined( USE_NORMALMAP )
 	varying vec3 vViewPosition;
@@ -50,13 +149,11 @@ attribute vec2 uv;
 	varying vec2 vUv;
 	uniform mat3 uvTransform;
 #endif
-
 #ifdef USE_DISPLACEMENTMAP
 	uniform sampler2D displacementMap;
 	uniform float displacementScale;
 	uniform float displacementBias;
 #endif
-
 #ifdef USE_MORPHTARGETS
 	#ifndef USE_MORPHNORMALS
 	uniform float morphTargetInfluences[ 8 ];
@@ -92,7 +189,6 @@ attribute vec2 uv;
 		}
 	#endif
 #endif
-
 #ifdef USE_LOGDEPTHBUF
 	#ifdef USE_LOGDEPTHBUF_EXT
 		varying float vFragDepth;
@@ -103,16 +199,13 @@ void main() {
 #if defined( USE_MAP ) || defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( USE_SPECULARMAP ) || defined( USE_ALPHAMAP ) || defined( USE_EMISSIVEMAP ) || defined( USE_ROUGHNESSMAP ) || defined( USE_METALNESSMAP )
 	vUv = ( uvTransform * vec3( uv, 1 ) ).xy;
 #endif
-
 vec3 objectNormal = vec3( normal );
-
 #ifdef USE_MORPHNORMALS
 	objectNormal += ( morphNormal0 - normal ) * morphTargetInfluences[ 0 ];
 	objectNormal += ( morphNormal1 - normal ) * morphTargetInfluences[ 1 ];
 	objectNormal += ( morphNormal2 - normal ) * morphTargetInfluences[ 2 ];
 	objectNormal += ( morphNormal3 - normal ) * morphTargetInfluences[ 3 ];
 #endif
-
 #ifdef USE_SKINNING
 	mat4 boneMatX = getBoneMatrix( skinIndex.x );
 	mat4 boneMatY = getBoneMatrix( skinIndex.y );
@@ -128,18 +221,14 @@ vec3 objectNormal = vec3( normal );
 	skinMatrix  = bindMatrixInverse * skinMatrix * bindMatrix;
 	objectNormal = vec4( skinMatrix * vec4( objectNormal, 0.0 ) ).xyz;
 #endif
-
 vec3 transformedNormal = normalMatrix * objectNormal;
 #ifdef FLIP_SIDED
 	transformedNormal = - transformedNormal;
 #endif
-
 #ifndef FLAT_SHADED
 	vNormal = normalize( transformedNormal );
 #endif
-
 vec3 transformed = vec3( position );
-
 #ifdef USE_MORPHTARGETS
 	transformed += ( morphTarget0 - position ) * morphTargetInfluences[ 0 ];
 	transformed += ( morphTarget1 - position ) * morphTargetInfluences[ 1 ];
@@ -152,7 +241,6 @@ vec3 transformed = vec3( position );
 	transformed += ( morphTarget7 - position ) * morphTargetInfluences[ 7 ];
 	#endif
 #endif
-
 #ifdef USE_SKINNING
 	vec4 skinVertex = bindMatrix * vec4( transformed, 1.0 );
 	vec4 skinned = vec4( 0.0 );
@@ -162,14 +250,11 @@ vec3 transformed = vec3( position );
 	skinned += boneMatW * skinVertex * skinWeight.w;
 	transformed = ( bindMatrixInverse * skinned ).xyz;
 #endif
-
 #ifdef USE_DISPLACEMENTMAP
 	transformed += normalize( objectNormal ) * ( texture2D( displacementMap, uv ).x * displacementScale + displacementBias );
 #endif
-
 vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
 gl_Position = projectionMatrix * mvPosition;
-
 #ifdef USE_LOGDEPTHBUF
 	#ifdef USE_LOGDEPTHBUF_EXT
 		vFragDepth = 1.0 + gl_Position.w;
@@ -178,23 +263,11 @@ gl_Position = projectionMatrix * mvPosition;
 		gl_Position.z *= gl_Position.w;
 	#endif
 #endif
-
 #if defined( FLAT_SHADED ) || defined( USE_BUMPMAP ) || defined( USE_NORMALMAP )
 	vViewPosition = - mvPosition.xyz;
 #endif
 }`;
 
-
-const ast = glsl.parse(text);
-
-const [a,b] = glsl.getUniformsAndAttributes(ast);
-
-const frgText = `precision mediump float;
-uniform float time;
-void main() {
-	gl_FragColor = vec4(1, 0, 0.5, time);
-}`
-
-const ast2 = glsl.parse(frgText);
-
-const [c,d] = glsl.getUniformsAndAttributes(ast2);
+const ast2 = glsl.parse(text2);
+const [a2,b2] = glsl.getUniformsAndAttributes(ast2);
+const css="";

@@ -9609,9 +9609,10 @@ const getUniformsAndAttributes = function (ast) {
 			} else if (node.type === 'function_declaration') {
 				if (node.name === 'main') {
 					next(node.body.statements, 'main');
-				} else {
-					//debug
-					
+				}
+			} else if (node.type === 'postfix') {
+				if (identify === 'main') {
+					next([node.expression], identify);
 				}
 			} else if (node.type === 'expression') {
 				next([node.expression], identify);
@@ -9626,7 +9627,7 @@ const getUniformsAndAttributes = function (ast) {
 			} else if (node.type === 'function_call') {
 				if (identify === 'main') {
 					node.parameters.forEach(parameter => {
-						if (parameter.type === 'identifier') next([parameter], identify);
+						next([parameter], identify);
 					});
 				}
 			} else if (node.type === 'identifier') {
@@ -9675,7 +9676,7 @@ var init = {
 var init_1 = init.parse;
 var init_2 = init.getUniformsAndAttributes;
 
-exports.default = init;
+exports['default'] = init;
 exports.parse = init_1;
 exports.getUniformsAndAttributes = init_2;
 

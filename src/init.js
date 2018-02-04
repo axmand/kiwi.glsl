@@ -64,9 +64,11 @@ const getUniformsAndAttributes = function (ast) {
 			else if (node.type === 'function_declaration') {
 				if (node.name === 'main') {
 					next(node.body.statements, 'main');
-				} else {
-					//debug
-					const ss = "";
+				}
+			}
+			else if(node.type === 'postfix'){
+				if(identify === 'main'){
+					next([node.expression],identify);
 				}
 			}
 			else if (node.type === 'expression') {
@@ -84,8 +86,7 @@ const getUniformsAndAttributes = function (ast) {
 			else if (node.type === 'function_call') {
 				if(identify === 'main'){
 					node.parameters.forEach(parameter => {
-						if (parameter.type === 'identifier')
-							next([parameter], identify);
+						next([parameter], identify);
 					});
 				}
 			}
