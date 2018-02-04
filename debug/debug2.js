@@ -783,32 +783,11 @@ void main() {
 #endif
     gl_FragColor = encodeHDR(outColor);
 }`;
+const glsl = require('./../src/init');
+const ast2 = glsl.parse(fText);
+const [a2,b2] = glsl.getUniformsAndAttributes(ast2);
 
-const gl = require('gl')(400,100);
+const ast1 =glsl.parse(vText);
+const [a1,b1] = glsl.getUniformsAndAttributes(ast1);
 
-const vs = gl.createShader(gl.VERTEX_SHADER);
-gl.shaderSource(vs,vText);
-gl.compileShader(vs);
-
-const fs = gl.createShader(gl.FRAGMENT_SHADER);
-gl.shaderSource(fs,fText);
-gl.compileShader(fs);
-
-const program = gl.createProgram();
-gl.attachShader(program,vs);
-gl.attachShader(program,fs);
-gl.linkProgram(program);
-
-const a_n = gl.getProgramParameter(program,gl.ACTIVE_ATTRIBUTES);
-const u_n = gl.getProgramParameter(program,gl.ACTIVE_UNIFORMS);
-
-for(let i =0;i<a_n;i++){
-    const info = gl.getActiveAttrib(program,i);
-    const name = info.name;
-}
-
-for(let i =0;i<u_n;i++){
-    const info = gl.getActiveUniform(program,i);
-    const name = info.name;
-}
-
+const a="";
