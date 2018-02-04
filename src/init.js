@@ -123,7 +123,7 @@ const getUniformsAndAttributes = function (ast) {
 					if(node.initializer)
 						next([node.initializer],identify);
 					else if(node.arraySize)
-						next([node.initializer],identify);
+						next([node.arraySize],identify);
 				}
 			}
 		});
