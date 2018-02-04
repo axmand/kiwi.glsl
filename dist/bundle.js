@@ -9676,7 +9676,7 @@ var init = {
 var init_1 = init.parse;
 var init_2 = init.getUniformsAndAttributes;
 
-exports['default'] = init;
+exports.default = init;
 exports.parse = init_1;
 exports.getUniformsAndAttributes = init_2;
 
