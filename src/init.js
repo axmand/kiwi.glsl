@@ -29,6 +29,7 @@ const parse = function (str) {
  * search node by depth
  */
 const getUniformsAndAttributes = function (ast) {
+	const func = {};
 	const active = {};
 	const define = {};
 	const expression = [];
@@ -76,7 +77,11 @@ const getUniformsAndAttributes = function (ast) {
 			}
 			else if (node.type === 'binary') {
 				//左边是等式
-				active[node.left.name] = 1;
+				if(node.left.type === 'identifier'){
+					active[node.left.name] = 1;
+				}else{
+					next([node.left], identify);
+				}
 				if (node.right.type === 'identifier') {
 					active[node.right.name] = 1;
 				} else {

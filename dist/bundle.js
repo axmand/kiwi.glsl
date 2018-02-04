@@ -9618,7 +9618,11 @@ const getUniformsAndAttributes = function (ast) {
 				next([node.expression], identify);
 			} else if (node.type === 'binary') {
 				//左边是等式
-				active[node.left.name] = 1;
+				if (node.left.type === 'identifier') {
+					active[node.left.name] = 1;
+				} else {
+					next([node.left], identify);
+				}
 				if (node.right.type === 'identifier') {
 					active[node.right.name] = 1;
 				} else {

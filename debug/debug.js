@@ -3,41 +3,31 @@ const glsl = require('./../src/init');
 const text = `#define DIRECTIONAL_LIGHT_COUNT 1
 #define SHADER_NAME standard
 uniform mat4 worldViewProjection ;
-
 uniform mat4 worldInverseTranspose ;
-
 uniform mat4 world ;
-
 uniform vec2 uvRepeat ;
-
 uniform vec2 uvOffset ;
-
 attribute vec3 position;
-
 attribute vec2 texcoord;
 
 #if defined(AOMAP_ENABLED)
 attribute vec2 texcoord2;
-
 #endif
-attribute vec3 normal;
 
+attribute vec3 normal;
 attribute vec4 tangent;
 
 #ifdef VERTEX_COLOR
 attribute vec4 a_Color;
-
 varying vec4 v_Color;
 #endif
+
 attribute vec3 barycentric;
 
 #ifdef SKINNING
 attribute vec3 weight;
-
 attribute vec4 joint;
-
 uniform mat4 skinMatrix [JOINT_COUNT];
-
 mat4 getSkinMatrix(float idx) {
     return skinMatrix[int(idx)];
 }
