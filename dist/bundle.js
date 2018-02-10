@@ -9656,7 +9656,7 @@ const getUniformsAndAttributes = function (ast) {
 				} else if (identify === 'varying') {
 					
 				} else if (identify === 'main') {
-					next([node.initializer], identify);
+					if (node.initializer) next([node.initializer], identify);else if (node.arraySize) next([node.arraySize], identify);
 				}
 			}
 		});
