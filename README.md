@@ -3,7 +3,7 @@
 [![codecov](https://codecov.io/gh/axmand/kiwi.glsl/branch/master/graph/badge.svg)](https://codecov.io/gh/axmand/kiwi.glsl)
 [![npm version](https://badge.fury.io/js/kiwi.glsl.svg)](https://badge.fury.io/js/kiwi.glsl)
 
-> precompile for glsl file
+> precompile *.glsl file
 ### usage ###
 ```javascript
 const frgText = `precision mediump float;
